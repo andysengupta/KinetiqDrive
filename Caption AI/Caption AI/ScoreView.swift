@@ -21,6 +21,8 @@ struct ScoreView: View {
     
     // Computed property to ensure clean AI caption display
     private var cleanAICaption: String {
+        print("🖼️ [SCOREVIEW] Received AI Caption: '\(aiCaption)'")
+        print("   Length: \(aiCaption.count) chars")
         let caption = aiCaption.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // Check if caption is malformed (only punctuation, empty, or just brackets)

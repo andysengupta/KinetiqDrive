@@ -359,6 +359,7 @@ struct PlayView: View {
                 // Stage B: Pre-generate AI caption
                 if let interp = interpretation {
                     aiCaption = try await afmService.generateCaption(from: interp)
+                    print("✅ PlayView: Background AI caption received: '\(aiCaption?.caption ?? "nil")'")
                 }
                 
                 isPreprocessing = false
@@ -399,14 +400,20 @@ struct PlayView: View {
             
             // Check if we already have AI caption from background processing
             if aiCaption == nil {
+                print("⚠️ PlayView: AI caption not cached, generating now...")
                 // Stage B: Generate AI caption (if not done in background)
                 aiCaption = try await afmService.generateCaption(from: interp)
+                print("✅ PlayView: Foreground AI caption received: '\(aiCaption?.caption ?? "nil")'")
+            } else {
+                print("✅ PlayView: Using cached AI caption: '\(aiCaption?.caption ?? "nil")'")
             }
             
             guard let aiCap = aiCaption else {
                 showErrorMessage("Failed to generate AI caption")
                 return
             }
+            
+            print("📊 PlayView: About to pass to ScoreView: '\(aiCap.caption)'")
             
             // Judge: Score captions
             judgment = try await afmService.judgeCaption(

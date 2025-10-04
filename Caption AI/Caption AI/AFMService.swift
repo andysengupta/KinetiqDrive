@@ -50,37 +50,49 @@ final class AFMService: ObservableObject {
     }
     
     private func performAvailabilityCheck() async {
+        print("🔍 [AFM AVAILABILITY CHECK]")
+        
         // Check for Apple Intelligence compatible device
         let deviceCheck = await checkDeviceCompatibility()
+        print("   Device compatible: \(deviceCheck.isCompatible)")
         
         if !deviceCheck.isCompatible {
             isAvailable = false
             availabilityStatus = deviceCheck.reason
+            print("   ❌ Device not compatible: \(deviceCheck.reason)")
             return
         }
         
         // Check SystemLanguageModel availability
         do {
             let availability = await SystemLanguageModel.default.availability
+            print("   SystemLanguageModel availability: \(availability)")
+            
             switch availability {
             case .available:
                 isAvailable = true
                 availabilityStatus = "Ready"
                 lastError = nil
+                print("   ✅ AFM Available and Ready")
             case .unavailable(let reason):
                 isAvailable = false
                 availabilityStatus = "AI unavailable: \(reason)"
                 lastError = nil
+                print("   ❌ AFM Unavailable: \(reason)")
             @unknown default:
                 isAvailable = false
                 availabilityStatus = "Unknown AI availability status"
                 lastError = nil
+                print("   ⚠️ Unknown AFM status")
             }
         } catch {
             isAvailable = false
             availabilityStatus = "Error checking AI availability"
             lastError = error.localizedDescription
+            print("   ❌ Error checking AFM: \(error)")
         }
+        
+        print("   Final isAvailable: \(isAvailable)")
     }
     
     private func checkDeviceCompatibility() async -> (isCompatible: Bool, reason: String) {
@@ -201,14 +213,23 @@ final class AFMService: ObservableObject {
     // MARK: - Stage B: AI Caption Generation
     
     func generateCaption(from interpretation: ImageInterpretation) async throws -> AICaption {
+        print("📝 [CAPTION GENERATION START]")
+        print("   AFM Available: \(isAvailable)")
+        print("   Interpretation: objects=\(interpretation.objects.joined(separator: ", "))")
+        
         guard isAvailable else {
-            return generateMockCaption(from: interpretation)
+            print("⚠️ AFM unavailable, using mock caption")
+            let mockCaption = generateMockCaption(from: interpretation)
+            print("🤖 Mock Caption Generated: '\(mockCaption.caption)'")
+            return mockCaption
         }
         
         do {
             let session = try await createSession()
             
             let prompt = AFMJudge.buildCaptionPrompt(interpretation: interpretation)
+            print("📤 Sending caption prompt to AFM...")
+            print("   Prompt length: \(prompt.count) chars")
             
             let options = GenerationOptions(
                 temperature: 0.7,
@@ -220,17 +241,25 @@ final class AFMService: ObservableObject {
                 options: options
             )
             
+            print("📥 AFM Caption Response received")
+            print("   Raw content: '\(response.content)'")
+            
             // Extract and parse caption from AI response
             let rawCaption = response.content
             let cleanedCaption = parseAICaption(rawCaption)
             let finalCaption = cleanedCaption.isEmpty ? "Visual Moment" : cleanedCaption
             
-            print("🎨 Final AI Caption: '\(finalCaption)'")
+            print("🎨 [CAPTION GENERATION END]")
+            print("   Final AI Caption: '\(finalCaption)'")
+            print("   Caption length: \(finalCaption.count) chars, \(finalCaption.split(separator: " ").count) words")
+            
             return AICaption(caption: finalCaption)
             
         } catch {
-            print("AFM Caption Error: \(error)")
-            return generateMockCaption(from: interpretation)
+            print("❌ AFM Caption Error: \(error)")
+            let mockCaption = generateMockCaption(from: interpretation)
+            print("🤖 Fallback Mock Caption: '\(mockCaption.caption)'")
+            return mockCaption
         }
     }
     
