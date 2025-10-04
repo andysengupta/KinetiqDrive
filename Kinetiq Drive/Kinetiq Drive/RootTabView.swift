@@ -19,6 +19,10 @@ struct RootTabView: View {
             .background(Color.clear)
             .tint(.blue)
         }
+        // Force TabView to float over content by reserving space visually
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: 30)
+        }
     }
 }
 

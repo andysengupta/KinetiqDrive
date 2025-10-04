@@ -19,10 +19,9 @@ struct TrackView: View {
             }
             .padding(.horizontal)
             .padding(.top, 12)
-            .padding(.bottom, 32)
+            .padding(.bottom, 110)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        // Keep content comfortably above the iPhone 17 tab bar area
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
     }
 
     private var header: some View {
@@ -94,7 +93,7 @@ struct TrackView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .frame(height: 360)
+        .frame(height: 420)
     }
 
     private var overlays: some View {
