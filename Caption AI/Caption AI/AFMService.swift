@@ -545,17 +545,31 @@ final class AFMService: ObservableObject {
         cleaned = cleaned.replacingOccurrences(of: "]", with: "")
         
         // Remove common prefixes
-        let prefixes = ["Caption:", "caption:", "Answer:", "Response:", "Result:", "Output:", "caption =", "Caption ="]
+        let prefixes = [
+            "Title:", "title:", "Title ", "title ",
+            "Caption:", "caption:", 
+            "Answer:", "Response:", "Result:", "Output:", 
+            "caption =", "Caption ="
+        ]
         for prefix in prefixes {
             if cleaned.hasPrefix(prefix) {
+                print("   Removing prefix '\(prefix)' from '\(cleaned.prefix(50))'")
                 cleaned = String(cleaned.dropFirst(prefix.count))
+                cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+                print("   After prefix removal: '\(cleaned.prefix(50))'")
+                break  // Only remove first matching prefix
             }
         }
         
-        // Remove quotes and colons
+        // Remove quotes, colons, and equals signs
         cleaned = cleaned.replacingOccurrences(of: "\"", with: "")
         cleaned = cleaned.replacingOccurrences(of: "'", with: "")
-        cleaned = cleaned.replacingOccurrences(of: ":", with: "")
+        
+        // Remove leading colons/equals but preserve internal punctuation
+        while cleaned.hasPrefix(":") || cleaned.hasPrefix("=") {
+            cleaned = String(cleaned.dropFirst())
+            cleaned = cleaned.trimmingCharacters(in: .whitespaces)
+        }
         
         // Remove newlines and get first non-empty line
         cleaned = cleaned.components(separatedBy: .newlines)

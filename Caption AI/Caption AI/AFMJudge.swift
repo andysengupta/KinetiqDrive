@@ -43,12 +43,12 @@ struct AFMJudge {
         
         **Rules:**
         - Up to 5 words (1-5 words ideal)
-        - Title Case (e.g., "Cozy Morning Vibes")
+        - Capitalize Each Word Like This: "Cozy Morning Vibes"
         - No emojis
         - Max 1 punctuation mark
         - Be creative but accurate to the image
         
-        Output only the AICaption structure.
+        Return ONLY the caption in the AICaption structure. Do NOT add prefixes like "Title:" or "Caption:".
         """
     }
     
