@@ -46,7 +46,14 @@ struct ScoreView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showShareSheet) {
             if let shareImage = shareImage {
-                ShareSheet(items: [shareImage, winningCaption])
+                let captionText = "Caption Clash: \"\(winningCaption)\" - Score: \(judgment.score)/10 🏆"
+                ShareSheet(items: [shareImage, captionText])
+            }
+        }
+        .onAppear {
+            // Pre-render share image for better performance
+            Task {
+                await prepareShareImageInBackground()
             }
         }
     }
@@ -256,11 +263,23 @@ struct ScoreView: View {
     }
     
     private func prepareShare() {
-        // Create shareable image with caption overlay
-        let renderer = ImageRenderer(content: shareableView)
-        renderer.scale = 3.0
-        shareImage = renderer.uiImage
+        // Show share sheet immediately (image may already be pre-rendered)
+        if shareImage == nil {
+            // Render on demand if not pre-rendered
+            let renderer = ImageRenderer(content: shareableView)
+            renderer.scale = UIScreen.main.scale * 2.0
+            shareImage = renderer.uiImage ?? image
+        }
         showShareSheet = true
+    }
+    
+    private func prepareShareImageInBackground() async {
+        // Pre-render the shareable image in background for smooth sharing
+        await MainActor.run {
+            let renderer = ImageRenderer(content: shareableView)
+            renderer.scale = UIScreen.main.scale * 2.0
+            shareImage = renderer.uiImage ?? image
+        }
     }
     
     private var shareableView: some View {
@@ -303,6 +322,14 @@ struct ShareSheet: UIViewControllerRepresentable {
             activityItems: items,
             applicationActivities: nil
         )
+        
+        // Exclude some activities for better UX
+        controller.excludedActivityTypes = [
+            .assignToContact,
+            .addToReadingList,
+            .openInIBooks
+        ]
+        
         return controller
     }
     

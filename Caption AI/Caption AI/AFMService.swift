@@ -169,9 +169,10 @@ final class AFMService: ObservableObject {
                 options: options
             )
             
-            // Extract caption from AI response
-            let caption = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            return AICaption(caption: caption.isEmpty ? "Visual Moment" : caption)
+            // Extract and parse caption from AI response
+            let rawCaption = response.content
+            let cleanedCaption = parseAICaption(rawCaption)
+            return AICaption(caption: cleanedCaption.isEmpty ? "Visual Moment" : cleanedCaption)
             
         } catch {
             print("AFM Caption Error: \(error)")
@@ -220,6 +221,61 @@ final class AFMService: ObservableObject {
             print("AFM Judge Error: \(error)")
             return generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
         }
+    }
+    
+    // MARK: - Parsing Helpers
+    
+    private func parseAICaption(_ raw: String) -> String {
+        var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove common AI response artifacts
+        // Remove JSON-like formatting
+        if cleaned.hasPrefix("{") || cleaned.hasPrefix("[") {
+            // Try to extract "caption" field from JSON
+            if let data = cleaned.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let caption = json["caption"] as? String {
+                cleaned = caption
+            }
+        }
+        
+        // Remove markdown code blocks
+        cleaned = cleaned.replacingOccurrences(of: "```json", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "```javascript", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "```", with: "")
+        
+        // Remove common prefixes
+        let prefixes = ["Caption:", "caption:", "Answer:", "Response:", "Result:", "Output:"]
+        for prefix in prefixes {
+            if cleaned.hasPrefix(prefix) {
+                cleaned = String(cleaned.dropFirst(prefix.count))
+            }
+        }
+        
+        // Remove quotes
+        cleaned = cleaned.replacingOccurrences(of: "\"", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "'", with: "")
+        
+        // Remove newlines and extra whitespace
+        cleaned = cleaned.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .first ?? cleaned
+        
+        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Extract first sentence if too long
+        if cleaned.split(separator: " ").count > 5 {
+            let words = cleaned.split(separator: " ")
+            cleaned = words.prefix(5).joined(separator: " ")
+        }
+        
+        // Capitalize first letter of each word (Title Case)
+        cleaned = cleaned.split(separator: " ")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+            .joined(separator: " ")
+        
+        return cleaned
     }
     
     // MARK: - Mock Implementations (Fallback)

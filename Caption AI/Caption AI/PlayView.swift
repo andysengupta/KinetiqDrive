@@ -29,6 +29,10 @@ struct PlayView: View {
     @State private var judgment: CaptionJudgment?
     @State private var showConfetti = false
     
+    // Background processing
+    @State private var isPreprocessing = false
+    @State private var preprocessTask: Task<Void, Never>?
+    
     // Character limit
     private let maxCaptionLength = 50
     
@@ -130,9 +134,17 @@ struct PlayView: View {
                     
                     Button {
                         proceedToCaption()
+                        startBackgroundProcessing()
                     } label: {
-                        Text("Continue")
-                            .frame(maxWidth: .infinity)
+                        HStack {
+                            Text("Continue")
+                            if isPreprocessing {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.white)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                     .primaryButtonStyle()
                 }
@@ -176,46 +188,80 @@ struct PlayView: View {
                     .shadow(radius: 3)
             }
             
-            // Instructions
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Label("Write Your Caption", systemImage: SFSymbols.textFormat)
-                    .font(Typography.title3)
-                
-                Text("Enter 3-5 words that capture this image")
-                    .font(Typography.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Spacing.md)
-            .cardStyle()
-            
-            // Text field
-            VStack(spacing: Spacing.sm) {
-                TextField("Your caption...", text: $userCaption, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(2)
-                    .font(Typography.title3)
-                    .onChange(of: userCaption) { _, newValue in
-                        if newValue.count > maxCaptionLength {
-                            userCaption = String(newValue.prefix(maxCaptionLength))
-                            Haptics.warning()
-                        }
+            // Enhanced Caption Input Card
+            VStack(spacing: Spacing.lg) {
+                // Header
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .font(.title2)
+                            .foregroundStyle(Gradients.primary)
+                        Text("Your Creative Caption")
+                            .font(Typography.title2.weight(.bold))
+                        Spacer()
                     }
-                
-                HStack {
-                    Text("\(userCaption.split(separator: " ").count) words")
-                        .font(Typography.caption)
-                        .foregroundStyle(captionWordCount >= 3 && captionWordCount <= 5 ? .green : .secondary)
                     
-                    Spacer()
-                    
-                    Text("\(userCaption.count)/\(maxCaptionLength)")
-                        .font(Typography.caption)
+                    Text("Write 3-5 words that capture the essence of this moment")
+                        .font(Typography.callout)
                         .foregroundStyle(.secondary)
                 }
+                
+                // Large, inviting text input
+                VStack(spacing: Spacing.xs) {
+                    ZStack(alignment: .topLeading) {
+                        // Background with gradient border effect
+                        RoundedRectangle(cornerRadius: CornerRadius.lg)
+                            .fill(Color.cardBackground)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CornerRadius.lg)
+                                    .stroke(
+                                        userCaption.isEmpty ? Color.gray.opacity(0.3) : 
+                                        (isValidCaption ? Color.green : Color.blue),
+                                        lineWidth: 2
+                                    )
+                            )
+                        
+                        // Text editor
+                        TextField("Type your caption here...", text: $userCaption, axis: .vertical)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 22, weight: .medium, design: .rounded))
+                            .lineLimit(3...5)
+                            .padding(Spacing.md)
+                            .onChange(of: userCaption) { _, newValue in
+                                if newValue.count > maxCaptionLength {
+                                    userCaption = String(newValue.prefix(maxCaptionLength))
+                                    Haptics.warning()
+                                }
+                            }
+                    }
+                    .frame(minHeight: 100)
+                    
+                    // Word count indicators
+                    HStack {
+                        HStack(spacing: Spacing.xs) {
+                            Image(systemName: captionWordCount >= 3 && captionWordCount <= 5 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundStyle(captionWordCount >= 3 && captionWordCount <= 5 ? .green : .orange)
+                            Text("\(captionWordCount) words")
+                                .font(Typography.callout.weight(.semibold))
+                                .foregroundStyle(captionWordCount >= 3 && captionWordCount <= 5 ? .green : .orange)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("\(userCaption.count)/\(maxCaptionLength)")
+                            .font(Typography.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+                }
             }
-            .padding(Spacing.md)
-            .cardStyle()
+            .padding(Spacing.lg)
+            .background(Color.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xl))
+            .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
             
             // Actions
             HStack(spacing: Spacing.md) {
@@ -282,6 +328,32 @@ struct PlayView: View {
         Haptics.selectionChanged()
     }
     
+    private func startBackgroundProcessing() {
+        guard let image = photoPickerService.selectedImage else { return }
+        
+        // Cancel any existing task
+        preprocessTask?.cancel()
+        
+        // Start background AI processing
+        isPreprocessing = true
+        preprocessTask = Task {
+            do {
+                // Stage A: Interpret image in background
+                interpretation = try await afmService.interpretImage(image)
+                
+                // Stage B: Pre-generate AI caption
+                if let interp = interpretation {
+                    aiCaption = try await afmService.generateCaption(from: interp)
+                }
+                
+                isPreprocessing = false
+            } catch {
+                print("Background processing error: \(error)")
+                isPreprocessing = false
+            }
+        }
+    }
+    
     private func submitCaption() {
         guard isValidCaption else { return }
         Haptics.selectionChanged()
@@ -299,16 +371,22 @@ struct PlayView: View {
         }
         
         do {
-            // Stage A: Interpret image
-            interpretation = try await afmService.interpretImage(image)
+            // Check if we already have interpretation from background processing
+            if interpretation == nil {
+                // Stage A: Interpret image (if not done in background)
+                interpretation = try await afmService.interpretImage(image)
+            }
             
             guard let interp = interpretation else {
                 showErrorMessage("Failed to interpret image")
                 return
             }
             
-            // Stage B: Generate AI caption
-            aiCaption = try await afmService.generateCaption(from: interp)
+            // Check if we already have AI caption from background processing
+            if aiCaption == nil {
+                // Stage B: Generate AI caption (if not done in background)
+                aiCaption = try await afmService.generateCaption(from: interp)
+            }
             
             guard let aiCap = aiCaption else {
                 showErrorMessage("Failed to generate AI caption")
