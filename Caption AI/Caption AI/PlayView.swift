@@ -264,25 +264,40 @@ struct PlayView: View {
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
             
             // Actions
-            HStack(spacing: Spacing.md) {
-                Button {
-                    gameState = .selectImage
-                    userCaption = ""
-                    Haptics.selectionChanged()
-                } label: {
-                    Text("Back")
-                        .frame(maxWidth: .infinity)
+            VStack(spacing: Spacing.sm) {
+                HStack(spacing: Spacing.md) {
+                    Button {
+                        gameState = .selectImage
+                        userCaption = ""
+                        Haptics.selectionChanged()
+                    } label: {
+                        Text("Back")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .secondaryButtonStyle()
+                    
+                    Button {
+                        submitCaption()
+                    } label: {
+                        Text("Clash! ⚔️")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .primaryButtonStyle(isEnabled: isValidCaption)
+                    .disabled(!isValidCaption)
                 }
-                .secondaryButtonStyle()
                 
-                Button {
-                    submitCaption()
-                } label: {
-                    Text("Clash! ⚔️")
-                        .frame(maxWidth: .infinity)
+                // Helpful hint when button is disabled
+                if !isValidCaption && !userCaption.isEmpty {
+                    HStack(spacing: Spacing.xs) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundStyle(.orange)
+                            .font(.caption)
+                        Text("Write 3-5 words to clash!")
+                            .font(Typography.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    .transition(.opacity.combined(with: .scale))
                 }
-                .primaryButtonStyle(isEnabled: isValidCaption)
-                .disabled(!isValidCaption)
             }
         }
     }

@@ -99,16 +99,24 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
-            .foregroundStyle(.white)
+            .foregroundStyle(isEnabled ? .white : .white.opacity(0.9))
             .padding(.horizontal, Spacing.lg)
             .padding(.vertical, Spacing.md)
             .background(
-                isEnabled ? Gradients.primary : Gradients.subtle
+                isEnabled ? Gradients.primary : LinearGradient(
+                    colors: [Color.gray.opacity(0.5), Color.gray.opacity(0.4)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             )
             .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: isEnabled ? 0 : 1)
+            )
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
-            .opacity(isEnabled ? 1.0 : 0.6)
+            .opacity(isEnabled ? 1.0 : 0.85)
     }
 }
 
