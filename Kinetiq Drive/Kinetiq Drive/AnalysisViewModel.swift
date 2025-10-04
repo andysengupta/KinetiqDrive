@@ -23,15 +23,22 @@ final class AnalysisViewModel: ObservableObject {
     private var samples: [Sample] = []
     private var cancellables = Set<AnyCancellable>()
     private let window: TimeInterval = 60
+    private let sensing: MotionSensingManager
 
     init(sensing: MotionSensingManager) {
-        // Sample whenever motion changes; throttle lightly to avoid excessive work
-        sensing.$lateralAccelerationG
-            .combineLatest(sensing.$verticalAccelerationG, sensing.$rotationRateX, sensing.$rotationRateY, sensing.$rotationRateZ)
-            .receive(on: DispatchQueue.main)
-            .throttle(for: .milliseconds(250), scheduler: DispatchQueue.main, latest: true)
-            .sink { [weak self] lateral, vertical, rx, ry, rz in
-                self?.ingest(lateral: lateral, vertical: vertical, rotationMag: sqrt(rx*rx + ry*ry + rz*rz))
+        self.sensing = sensing
+        // Timer-driven sampling avoids heavy Combine type-checking and gives a consistent cadence
+        Timer.publish(every: 0.25, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                let lateral = self.sensing.lateralAccelerationG
+                let vertical = self.sensing.verticalAccelerationG
+                let rx = self.sensing.rotationRateX
+                let ry = self.sensing.rotationRateY
+                let rz = self.sensing.rotationRateZ
+                let rotationMag = sqrt(rx*rx + ry*ry + rz*rz)
+                self.ingest(lateral: lateral, vertical: vertical, rotationMag: rotationMag)
             }
             .store(in: &cancellables)
     }

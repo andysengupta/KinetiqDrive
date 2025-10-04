@@ -266,15 +266,18 @@ private struct ScoreBar: View {
                 Text(String(format: "%.1f", value))
                     .font(.headline)
             }
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(.tertiarySystemFill))
-                    .frame(height: 16)
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(DesignSystem.Gradients.score(for: value))
-                    .frame(width: max(8, CGFloat(value/10.0) * UIScreen.main.bounds.width * 0.78), height: 16)
-                    .animation(.easeOut(duration: 0.3), value: value)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.tertiarySystemFill))
+                        .frame(height: 16)
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(DesignSystem.Gradients.score(for: value))
+                        .frame(width: max(8, CGFloat(value/10.0) * geo.size.width), height: 16)
+                        .animation(.easeOut(duration: 0.3), value: value)
+                }
             }
+            .frame(height: 16)
             Text(label)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
