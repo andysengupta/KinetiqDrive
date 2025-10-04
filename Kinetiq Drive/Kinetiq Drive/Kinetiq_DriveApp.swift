@@ -11,6 +11,9 @@ import SwiftUI
 struct Kinetiq_DriveApp: App {
     @StateObject private var motionSensingManager = MotionSensingManager()
     @StateObject private var analysisViewModel: AnalysisViewModel
+    @StateObject private var rideStore = RideStore()
+    @StateObject private var locationManager = LocationManager()
+    @State private var showSplash: Bool = true
 
     init() {
         let sensing = MotionSensingManager()
@@ -19,9 +22,17 @@ struct Kinetiq_DriveApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(motionSensingManager)
-                .environmentObject(analysisViewModel)
+            ZStack {
+                if showSplash {
+                    SplashView { withAnimation(.easeOut(duration: 0.4)) { showSplash = false } }
+                } else {
+                    RootTabView()
+                }
+            }
+            .environmentObject(motionSensingManager)
+            .environmentObject(analysisViewModel)
+            .environmentObject(rideStore)
+            .environmentObject(locationManager)
         }
     }
 }

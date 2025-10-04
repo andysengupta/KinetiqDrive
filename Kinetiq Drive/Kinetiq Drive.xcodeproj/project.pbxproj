@@ -407,6 +407,7 @@
 				INFOPLIST_KEY_CFBundleName = "Ride IQ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Tracks routes for ride analysis.";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Ride IQ analyzes acceleration and rotation to assess ride smoothness and safety on-device.";
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -448,6 +449,7 @@
 				INFOPLIST_KEY_CFBundleName = "Ride IQ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Tracks routes for ride analysis.";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Ride IQ analyzes acceleration and rotation to assess ride smoothness and safety on-device.";
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
