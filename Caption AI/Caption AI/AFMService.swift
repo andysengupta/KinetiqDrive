@@ -226,16 +226,30 @@ final class AFMService: ObservableObject {
     // MARK: - Parsing Helpers
     
     private func parseAICaption(_ raw: String) -> String {
+        print("🔍 Parsing AI Caption - Raw input: '\(raw)'")
+        
         var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Remove common AI response artifacts
-        // Remove JSON-like formatting
-        if cleaned.hasPrefix("{") || cleaned.hasPrefix("[") {
-            // Try to extract "caption" field from JSON
+        // Early return if empty or malformed
+        if cleaned.isEmpty || cleaned.count < 2 {
+            print("⚠️ Caption too short or empty, using fallback")
+            return "Visual Moment"
+        }
+        
+        // Remove JSON arrays/objects completely if they're the only content
+        if (cleaned.hasPrefix("[") || cleaned.hasPrefix("{")) && cleaned.count < 10 {
+            print("⚠️ Caption is just JSON brackets, using fallback")
+            return "Captured Moment"
+        }
+        
+        // Try to extract from JSON structure
+        if cleaned.contains("{") && cleaned.contains("caption") {
             if let data = cleaned.data(using: .utf8),
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let caption = json["caption"] as? String {
+               let caption = json["caption"] as? String,
+               !caption.isEmpty {
                 cleaned = caption
+                print("✅ Extracted from JSON: '\(cleaned)'")
             }
         }
         
@@ -244,38 +258,58 @@ final class AFMService: ObservableObject {
         cleaned = cleaned.replacingOccurrences(of: "```javascript", with: "")
         cleaned = cleaned.replacingOccurrences(of: "```", with: "")
         
+        // Remove JSON brackets and braces
+        cleaned = cleaned.replacingOccurrences(of: "{", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "}", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "[", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "]", with: "")
+        
         // Remove common prefixes
-        let prefixes = ["Caption:", "caption:", "Answer:", "Response:", "Result:", "Output:"]
+        let prefixes = ["Caption:", "caption:", "Answer:", "Response:", "Result:", "Output:", "caption =", "Caption ="]
         for prefix in prefixes {
             if cleaned.hasPrefix(prefix) {
                 cleaned = String(cleaned.dropFirst(prefix.count))
             }
         }
         
-        // Remove quotes
+        // Remove quotes and colons
         cleaned = cleaned.replacingOccurrences(of: "\"", with: "")
         cleaned = cleaned.replacingOccurrences(of: "'", with: "")
+        cleaned = cleaned.replacingOccurrences(of: ":", with: "")
         
-        // Remove newlines and extra whitespace
+        // Remove newlines and get first non-empty line
         cleaned = cleaned.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
             .first ?? cleaned
         
+        // Clean up whitespace
         cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Extract first sentence if too long
-        if cleaned.split(separator: " ").count > 5 {
-            let words = cleaned.split(separator: " ")
+        // If still malformed, use fallback
+        if cleaned.count < 3 || !cleaned.contains(where: { $0.isLetter }) {
+            print("⚠️ Caption still malformed: '\(cleaned)', using fallback")
+            return "Moment Captured"
+        }
+        
+        // Extract first 5 words if too long
+        let words = cleaned.split(separator: " ").filter { !$0.isEmpty }
+        if words.count > 5 {
             cleaned = words.prefix(5).joined(separator: " ")
         }
         
         // Capitalize first letter of each word (Title Case)
         cleaned = cleaned.split(separator: " ")
-            .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
+            .filter { !$0.isEmpty }
+            .map { word in
+                let firstChar = word.prefix(1).uppercased()
+                let rest = word.dropFirst().lowercased()
+                return firstChar + rest
+            }
             .joined(separator: " ")
         
-        return cleaned
+        print("✅ Final cleaned caption: '\(cleaned)'")
+        return cleaned.isEmpty ? "Visual Moment" : cleaned
     }
     
     // MARK: - Mock Implementations (Fallback)
@@ -293,9 +327,24 @@ final class AFMService: ObservableObject {
     }
     
     private func generateMockCaption(from interpretation: ImageInterpretation) -> AICaption {
-        // Generate simple caption from interpretation
-        let words = interpretation.objects.prefix(2) + interpretation.vibes.prefix(1)
-        let caption = words.map { $0.capitalized }.joined(separator: " ")
+        // Generate varied, interesting captions for fallback mode
+        let templates = [
+            "\(interpretation.vibes.first?.capitalized ?? "Captured") \(interpretation.objects.first?.capitalized ?? "Moment")",
+            "\(interpretation.scene.split(separator: " ").prefix(3).joined(separator: " "))",
+            "\(interpretation.vibes.first?.capitalized ?? "Special") \(interpretation.actions.first?.capitalized ?? "Scene")",
+            "The \(interpretation.vibes.first ?? "Amazing") \(interpretation.objects.first ?? "View")",
+            "\(interpretation.objects.first?.capitalized ?? "Beautiful") and \(interpretation.vibes.first?.capitalized ?? "Serene")"
+        ]
+        
+        // Pick a random template based on hash of objects (consistent per image)
+        let index = abs(interpretation.objects.joined().hashValue) % templates.count
+        var caption = templates[index]
+        
+        // Clean up and limit to 5 words
+        let words = caption.split(separator: " ").filter { !$0.isEmpty }.prefix(5)
+        caption = words.map { $0.capitalized }.joined(separator: " ")
+        
+        print("🤖 Generated mock caption: '\(caption)'")
         return AICaption(caption: caption.isEmpty ? "Visual Moment Captured" : caption)
     }
     

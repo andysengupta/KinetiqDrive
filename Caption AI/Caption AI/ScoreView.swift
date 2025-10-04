@@ -19,6 +19,21 @@ struct ScoreView: View {
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
     
+    // Computed property to ensure clean AI caption display
+    private var cleanAICaption: String {
+        let caption = aiCaption.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Check if caption is malformed (only punctuation, too short, etc)
+        if caption.isEmpty || 
+           caption.count < 3 || 
+           !caption.contains(where: { $0.isLetter }) ||
+           caption.allSatisfy({ "[]{}\"',:".contains($0) || $0.isWhitespace }) {
+            return "Captured Moment"
+        }
+        
+        return caption
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.lg) {
@@ -144,7 +159,7 @@ struct ScoreView: View {
                     }
                 }
                 
-                Text("\"\(aiCaption)\"")
+                Text("\"\(cleanAICaption)\"")
                     .font(Typography.title3)
                     .italic()
             }
@@ -259,7 +274,7 @@ struct ScoreView: View {
     }
     
     private var winningCaption: String {
-        didUserWin ? userCaption : aiCaption
+        didUserWin ? userCaption : cleanAICaption
     }
     
     private func prepareShare() {
