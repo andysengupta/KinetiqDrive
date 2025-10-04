@@ -270,8 +270,16 @@ final class AFMService: ObservableObject {
         aiCaption: String,
         interpretation: ImageInterpretation
     ) async throws -> CaptionJudgment {
+        print("⚖️ [JUDGING START]")
+        print("   AFM Available: \(isAvailable)")
+        print("   User Caption: '\(userCaption)'")
+        print("   AI Caption: '\(aiCaption)'")
+        
         guard isAvailable else {
-            return generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+            print("⚠️ AFM unavailable, using mock judgment")
+            let mockJudgment = generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+            print("🤖 Mock Judgment: score=\(mockJudgment.score)/10")
+            return mockJudgment
         }
         
         do {
@@ -282,6 +290,8 @@ final class AFMService: ObservableObject {
                 aiCaption: aiCaption,
                 interpretation: interpretation
             )
+            print("📤 Sending judgment prompt to AFM...")
+            print("   Prompt length: \(prompt.count) chars")
             
             let options = GenerationOptions(
                 temperature: 0.6,
@@ -293,16 +303,24 @@ final class AFMService: ObservableObject {
                 options: options
             )
             
+            print("📥 AFM Judgment Response received")
+            print("   Raw content: '\(response.content)'")
+            
             // Parse AI judgment response
-            print("⚖️ AFM Judgment response: \(response.content.prefix(200))...")
             let judgment = parseJudgmentResponse(response.content, userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
             
-            print("✅ Parsed score: \(judgment.score)/10")
+            print("⚖️ [JUDGING END]")
+            print("   Final Score: \(judgment.score)/10")
+            print("   Tips: \(judgment.shortTips)")
+            print("   Categories: \(judgment.categories)")
+            
             return judgment
             
         } catch {
-            print("AFM Judge Error: \(error)")
-            return generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+            print("❌ AFM Judge Error: \(error)")
+            let mockJudgment = generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+            print("🤖 Fallback Mock Judgment: score=\(mockJudgment.score)/10")
+            return mockJudgment
         }
     }
     

@@ -427,6 +427,12 @@ struct PlayView: View {
                 return
             }
             
+            print("📊 PlayView: Judgment received")
+            print("   Score: \(judg.score)/10")
+            print("   Winner: \(judg.winner)")
+            print("   Tips count: \(judg.shortTips.count)")
+            print("   About to pass to ScoreView...")
+            
             // Save round
             await saveRound(judgment: judg, interpretation: interp, aiCaption: aiCap, image: image)
             

@@ -38,6 +38,12 @@ struct ScoreView: View {
     }
     
     var body: some View {
+        let _ = print("🎯 [SCOREVIEW RENDER]")
+        let _ = print("   Judgment Score: \(judgment.score)/10")
+        let _ = print("   User Caption: '\(userCaption)'")
+        let _ = print("   AI Caption (raw): '\(aiCaption)'")
+        let _ = print("   Winner: \(judgment.winner)")
+        
         ScrollView {
             VStack(spacing: Spacing.lg) {
                 // Result header
