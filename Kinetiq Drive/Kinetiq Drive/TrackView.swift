@@ -21,6 +21,8 @@ struct TrackView: View {
             .padding(.top, 12)
             .padding(.bottom, 32)
         }
+        // Keep content comfortably above the iPhone 17 tab bar area
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
     }
 
     private var header: some View {
@@ -38,56 +40,61 @@ struct TrackView: View {
     }
 
     private var ringControls: some View {
-        VStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 14)
-                    .frame(width: 220, height: 220)
-                Circle()
-                    .trim(from: 0, to: CGFloat(min(1, analysis.smoothnessScore/10)))
-                    .stroke(DesignSystem.Gradients.score(for: analysis.smoothnessScore), style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 220, height: 220)
-                    .animation(.easeInOut(duration: 0.3), value: analysis.smoothnessScore)
-                Circle()
-                    .trim(from: 0, to: CGFloat(min(1, analysis.steadinessScore/10)))
-                    .stroke(DesignSystem.Gradients.score(for: analysis.steadinessScore), style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 180, height: 180)
-                    .animation(.easeInOut(duration: 0.3), value: analysis.steadinessScore)
-                Circle()
-                    .trim(from: 0, to: CGFloat(min(1, analysis.stabilityScore/10)))
-                    .stroke(DesignSystem.Gradients.score(for: analysis.stabilityScore), style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 150, height: 150)
-                    .animation(.easeInOut(duration: 0.3), value: analysis.stabilityScore)
+        GeometryReader { geo in
+            let base = min(geo.size.width, geo.size.height) * 0.55
+            VStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.2), lineWidth: max(12, base * 0.06))
+                        .frame(width: base, height: base)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(min(1, analysis.smoothnessScore/10)))
+                        .stroke(DesignSystem.Gradients.score(for: analysis.smoothnessScore), style: StrokeStyle(lineWidth: max(12, base * 0.06), lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: base, height: base)
+                        .animation(.easeInOut(duration: 0.3), value: analysis.smoothnessScore)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(min(1, analysis.steadinessScore/10)))
+                        .stroke(DesignSystem.Gradients.score(for: analysis.steadinessScore), style: StrokeStyle(lineWidth: max(8, base * 0.04), lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: base * 0.82, height: base * 0.82)
+                        .animation(.easeInOut(duration: 0.3), value: analysis.steadinessScore)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(min(1, analysis.stabilityScore/10)))
+                        .stroke(DesignSystem.Gradients.score(for: analysis.stabilityScore), style: StrokeStyle(lineWidth: max(6, base * 0.03), lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: base * 0.66, height: base * 0.66)
+                        .animation(.easeInOut(duration: 0.3), value: analysis.stabilityScore)
 
-                Button(action: toggle) {
-                    ZStack {
-                        Circle()
-                            .fill(isPlaying ? DesignSystem.Colors.pauseGray : DesignSystem.Colors.playOrange)
-                            .frame(width: 96, height: 96)
-                            .shadow(color: .black.opacity(0.25), radius: 16, x: 0, y: 10)
-                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                            .foregroundStyle(.white)
-                            .font(.system(size: 36, weight: .bold))
+                    Button(action: toggle) {
+                        ZStack {
+                            Circle()
+                                .fill(isPlaying ? DesignSystem.Colors.pauseGray : DesignSystem.Colors.playOrange)
+                                .frame(width: max(88, base * 0.42), height: max(88, base * 0.42))
+                                .shadow(color: .black.opacity(0.25), radius: 16, x: 0, y: 10)
+                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                .foregroundStyle(.white)
+                                .font(.system(size: max(34, base * 0.16), weight: .bold))
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .scaleEffect(isPlaying ? 0.98 : 1.02)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPlaying)
                 }
-                .buttonStyle(.plain)
-                .scaleEffect(isPlaying ? 0.98 : 1.02)
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPlaying)
-            }
 
-            HStack(spacing: 16) {
-                Text(String(format: "%.1f km/h", location.speedMps * 3.6))
-                    .foregroundStyle(.white)
-                Text(String(format: "%.2f km", location.distanceMeters / 1000))
-                    .foregroundStyle(.white)
-                Text(String(format: "%.0f m", location.elevationMeters))
-                    .foregroundStyle(.white)
+                HStack(spacing: 16) {
+                    Text(String(format: "%.1f km/h", location.speedMps * 3.6))
+                        .foregroundStyle(.white)
+                    Text(String(format: "%.2f km", location.distanceMeters / 1000))
+                        .foregroundStyle(.white)
+                    Text(String(format: "%.0f m", location.elevationMeters))
+                        .foregroundStyle(.white)
+                }
+                .font(.headline)
             }
-            .font(.headline)
+            .frame(maxWidth: .infinity)
         }
+        .frame(height: 360)
     }
 
     private var overlays: some View {
