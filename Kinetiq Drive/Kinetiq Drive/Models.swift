@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import Combine
 
 struct Ride: Identifiable, Codable {
     let id: UUID

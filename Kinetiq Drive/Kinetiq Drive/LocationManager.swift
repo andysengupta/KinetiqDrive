@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import Combine
 
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
