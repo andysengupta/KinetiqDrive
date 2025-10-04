@@ -11,7 +11,7 @@ struct TrackView: View {
         ZStack {
             DesignSystem.Gradients.background.ignoresSafeArea()
             ParticleBackground().ignoresSafeArea()
-            VStack(spacing: 16) {
+            VStack(spacing: 20) {
                 header
                 ringControls
                 overlays
@@ -25,6 +25,7 @@ struct TrackView: View {
 
     private var header: some View {
         HStack {
+            GlowIcon(systemName: "play.circle.fill", size: 26)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Track")
                     .font(.largeTitle.bold())
@@ -91,7 +92,7 @@ struct TrackView: View {
 
     private var overlays: some View {
         HStack(spacing: 12) {
-            labelCard(icon: "cloud.sun", title: "Weather", value: "—")
+            labelCard(icon: "cloud.sun.fill", title: "Weather", value: "—")
             labelCard(icon: "location.fill", title: "GPS", value: location.authorizationStatus == .authorizedAlways || location.authorizationStatus == .authorizedWhenInUse ? "On" : "Off")
         }
     }
@@ -106,7 +107,7 @@ struct TrackView: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.12)))
+        .glassCard()
     }
 
     private func toggle() {

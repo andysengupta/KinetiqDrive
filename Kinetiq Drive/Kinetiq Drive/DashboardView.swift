@@ -44,12 +44,12 @@ struct DashboardView: View {
 
     private func statCard(icon: String, title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: icon).foregroundStyle(.white)
+            GlowIcon(systemName: icon, size: 18)
             Text(value).font(.title2.bold()).foregroundStyle(.white)
             Text(title).font(.subheadline).foregroundStyle(.white.opacity(0.85))
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.15)))
+        .glassCard()
     }
 
     private var chart: some View {

@@ -5,8 +5,11 @@ struct StatsView: View {
     var body: some View {
         ZStack {
             DesignSystem.Gradients.background.ignoresSafeArea()
-            VStack(spacing: 16) {
-                Text("Statistics").font(.largeTitle.bold()).foregroundStyle(.white)
+            VStack(spacing: 18) {
+                HStack(spacing: 10) {
+                    GlowIcon(systemName: "chart.bar.xaxis", size: 22)
+                    Text("Statistics").font(.largeTitle.bold()).foregroundStyle(.white)
+                }
                 Picker("Scope", selection: $scope) {
                     Text("Week").tag(0); Text("Month").tag(1); Text("Year").tag(2); Text("All Time").tag(3)
                 }

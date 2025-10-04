@@ -7,7 +7,10 @@ struct HistoryView: View {
             DesignSystem.Gradients.background.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Ride History").font(.largeTitle.bold()).foregroundStyle(.white)
+                    HStack(spacing: 10) {
+                        GlowIcon(systemName: "clock", size: 22)
+                        Text("Ride History").font(.largeTitle.bold()).foregroundStyle(.white)
+                    }
                     ForEach(store.rides) { ride in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack { Text(ride.date.formatted(date: .abbreviated, time: .shortened)); Spacer(); Text("Score \(String(format: "%.1f", ride.totalScore))") }
@@ -16,7 +19,7 @@ struct HistoryView: View {
                             Text(ride.insight).foregroundStyle(.white.opacity(0.9)).font(.subheadline)
                         }
                         .padding()
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.12)))
+                        .glassCard()
                     }
                     if store.rides.isEmpty {
                         VStack(spacing: 12) {

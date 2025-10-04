@@ -9,24 +9,28 @@ import SwiftUI
 
 enum DesignSystem {
     enum Colors {
-        static let brandStart = Color(red: 1.00, green: 0.55, blue: 0.15)
-        static let brandEnd = Color(red: 0.95, green: 0.20, blue: 0.45)
-        static let pillBackground = Color.black.opacity(0.08)
-        static let cardBackground = Color(.secondarySystemBackground)
+        // Vibrant brand theme (orange → pink → magenta)
+        static let brandA = Color(red: 1.00, green: 0.45, blue: 0.10)
+        static let brandB = Color(red: 0.98, green: 0.20, blue: 0.55)
+        static let brandC = Color(red: 0.77, green: 0.25, blue: 0.90)
+
+        static let pillBackground = Color.white.opacity(0.10)
+        static let glassFill = Color.white.opacity(0.14)
+        static let glassStroke = Color.white.opacity(0.25)
         static let ringBackground = Color.white.opacity(0.15)
-        static let stopBlue = Color.blue
-        static let playOrange = Color.orange
-        static let pauseGray = Color.gray
+        static let stopBlue = Color(red: 0.10, green: 0.55, blue: 1.0)
+        static let playOrange = Color(red: 1.00, green: 0.50, blue: 0.18)
+        static let pauseGray = Color(white: 0.45)
     }
 
     enum Gradients {
-        static let background = LinearGradient(colors: [Colors.brandStart, Colors.brandEnd], startPoint: .topLeading, endPoint: .bottomTrailing)
+        static let background = LinearGradient(colors: [Colors.brandA, Colors.brandB, Colors.brandC], startPoint: .topLeading, endPoint: .bottomTrailing)
+        static func glow() -> LinearGradient { LinearGradient(colors: [Colors.brandB, .white.opacity(0.9)], startPoint: .top, endPoint: .bottom) }
         static func score(for value: Double) -> LinearGradient {
             let clamped = max(0, min(10, value)) / 10.0
-            // Red → Yellow → Green
-            let red = Color(red: 1.0, green: 0.3 + 0.4 * clamped, blue: 0.2)
-            let green = Color(red: 0.2, green: 0.7 + 0.3 * clamped, blue: 0.3)
-            return LinearGradient(colors: [red, green], startPoint: .leading, endPoint: .trailing)
+            let start = Color(red: 1.0, green: 0.35 + 0.45 * clamped, blue: 0.22)
+            let end = Color(red: 0.25, green: 0.85 * clamped + 0.15, blue: 0.35)
+            return LinearGradient(colors: [start, end], startPoint: .leading, endPoint: .trailing)
         }
     }
 
@@ -38,23 +42,28 @@ enum DesignSystem {
     }
 
     enum Radius {
-        static let card: CGFloat = 16
+        static let card: CGFloat = 18
         static let pill: CGFloat = 22
     }
 }
 
-struct CardBackground: ViewModifier {
+struct GlassBackground: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                    .fill(DesignSystem.Colors.cardBackground)
+                    .fill(DesignSystem.Colors.glassFill)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                            .stroke(DesignSystem.Colors.glassStroke, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 10)
             )
     }
 }
 
 extension View {
-    func cardBackground() -> some View { modifier(CardBackground()) }
+    func glassCard() -> some View { modifier(GlassBackground()) }
 }
 
 
