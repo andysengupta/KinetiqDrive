@@ -69,7 +69,7 @@ struct AICaption: Codable, Sendable {
     
     var isValid: Bool {
         let count = wordCount
-        return count >= 3 && count <= 5 && !caption.isEmpty
+        return count >= 1 && count <= 5 && !caption.isEmpty
     }
 }
 

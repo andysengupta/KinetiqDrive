@@ -201,7 +201,7 @@ struct PlayView: View {
                         Spacer()
                     }
                     
-                    Text("Write 3-5 words that capture the essence of this moment")
+                    Text("Write up to 5 words that capture the essence of this moment")
                         .font(Typography.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -239,11 +239,11 @@ struct PlayView: View {
                     // Word count indicators
                     HStack {
                         HStack(spacing: Spacing.xs) {
-                            Image(systemName: captionWordCount >= 3 && captionWordCount <= 5 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundStyle(captionWordCount >= 3 && captionWordCount <= 5 ? .green : .orange)
+                            Image(systemName: captionWordCount >= 1 && captionWordCount <= 5 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundStyle(captionWordCount >= 1 && captionWordCount <= 5 ? .green : .orange)
                             Text("\(captionWordCount) words")
                                 .font(Typography.callout.weight(.semibold))
-                                .foregroundStyle(captionWordCount >= 3 && captionWordCount <= 5 ? .green : .orange)
+                                .foregroundStyle(captionWordCount >= 1 && captionWordCount <= 5 ? .green : .orange)
                         }
                         
                         Spacer()
@@ -292,7 +292,7 @@ struct PlayView: View {
                         Image(systemName: "info.circle.fill")
                             .foregroundStyle(.orange)
                             .font(.caption)
-                        Text("Write 3-5 words to clash!")
+                        Text("Write 1-5 words to clash!")
                             .font(Typography.caption)
                             .foregroundStyle(.orange)
                     }
@@ -335,7 +335,7 @@ struct PlayView: View {
     
     private var isValidCaption: Bool {
         let count = captionWordCount
-        return count >= 3 && count <= 5 && !userCaption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return count >= 1 && count <= 5 && !userCaption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     private func proceedToCaption() {

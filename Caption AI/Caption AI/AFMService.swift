@@ -262,11 +262,11 @@ final class AFMService: ObservableObject {
             )
             
             // Parse AI judgment response
-            _ = response.content // TODO: Parse structured judgment from response
+            print("⚖️ AFM Judgment response: \(response.content.prefix(200))...")
+            let judgment = parseJudgmentResponse(response.content, userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
             
-            // Simple parsing - extract score and tips from response
-            // For now, use enhanced mock that considers AI response
-            return generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+            print("✅ Parsed score: \(judgment.score)/10")
+            return judgment
             
         } catch {
             print("AFM Judge Error: \(error)")
@@ -404,32 +404,83 @@ final class AFMService: ObservableObject {
         )
     }
     
-    private func parseAICaption(_ raw: String) -> String {
-        print("🔍 Parsing AI Caption - Raw input: '\(raw)'")
+    private func parseJudgmentResponse(_ raw: String, userCaption: String, aiCaption: String, interpretation: ImageInterpretation) -> CaptionJudgment {
+        print("🔍 Parsing judgment response...")
         
         var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Early return if empty or malformed
-        if cleaned.isEmpty || cleaned.count < 2 {
-            print("⚠️ Caption too short or empty, using fallback")
+        // Try to extract JSON
+        if let jsonStart = cleaned.range(of: "{"),
+           let jsonEnd = cleaned.range(of: "}", options: .backwards) {
+            cleaned = String(cleaned[jsonStart.lowerBound...jsonEnd.upperBound])
+        }
+        
+        // Try to parse as JSON
+        if let data = cleaned.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            
+            let score = (json["score"] as? Int) ?? 7
+            let tips = (json["shortTips"] as? [String]) ?? (json["tips"] as? [String]) ?? []
+            let categories = (json["categories"] as? [String]) ?? ["Relevance", "Specificity"]
+            
+            print("✅ Successfully parsed judgment: score=\(score)")
+            return CaptionJudgment(
+                score: min(10, max(0, score)),
+                shortTips: tips.isEmpty ? ["Try being more specific", "Use descriptive words"] : Array(tips.prefix(3)),
+                categories: categories
+            )
+        }
+        
+        // Fallback: Try to extract score from text
+        let scorePattern = try? NSRegularExpression(pattern: "score[:\\s]+([0-9]+)", options: .caseInsensitive)
+        if let match = scorePattern?.firstMatch(in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned)),
+           let range = Range(match.range(at: 1), in: cleaned),
+           let score = Int(cleaned[range]) {
+            print("⚠️ Extracted score from text: \(score)")
+            return CaptionJudgment(
+                score: min(10, max(0, score)),
+                shortTips: ["Try being more specific", "Use descriptive words", "Consider the image context"],
+                categories: ["Overall"]
+            )
+        }
+        
+        // Ultimate fallback
+        print("⚠️ Could not parse judgment, using heuristic")
+        return generateMockJudgment(userCaption: userCaption, aiCaption: aiCaption, interpretation: interpretation)
+    }
+    
+    private func parseAICaption(_ raw: String) -> String {
+        print("🔍 Parsing AI Caption - Raw input: '\(raw.prefix(100))'")
+        
+        var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Early return if empty
+        if cleaned.isEmpty {
+            print("⚠️ Caption empty, using fallback")
             return "Visual Moment"
         }
         
-        // Remove JSON arrays/objects completely if they're the only content
-        if (cleaned.hasPrefix("[") || cleaned.hasPrefix("{")) && cleaned.count < 10 {
-            print("⚠️ Caption is just JSON brackets, using fallback")
-            return "Captured Moment"
+        // Try to extract from JSON structure FIRST (most common case)
+        if cleaned.contains("{") && cleaned.contains("caption") {
+            // Extract JSON portion
+            if let jsonStart = cleaned.range(of: "{"),
+               let jsonEnd = cleaned.range(of: "}", options: .backwards) {
+                let jsonString = String(cleaned[jsonStart.lowerBound...jsonEnd.upperBound])
+                
+                if let data = jsonString.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let caption = json["caption"] as? String,
+                   !caption.isEmpty {
+                    cleaned = caption
+                    print("✅ Extracted from JSON: '\(cleaned)'")
+                }
+            }
         }
         
-        // Try to extract from JSON structure
-        if cleaned.contains("{") && cleaned.contains("caption") {
-            if let data = cleaned.data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let caption = json["caption"] as? String,
-               !caption.isEmpty {
-                cleaned = caption
-                print("✅ Extracted from JSON: '\(cleaned)'")
-            }
+        // Remove JSON brackets if they're still there
+        if (cleaned.hasPrefix("[") || cleaned.hasPrefix("{")) && cleaned.count < 10 {
+            print("⚠️ Caption is just JSON brackets after extraction, using fallback")
+            return "Captured Moment"
         }
         
         // Remove markdown code blocks
@@ -542,7 +593,7 @@ final class AFMService: ObservableObject {
         }
         
         var score = 5
-        if wordCount >= 3 && wordCount <= 5 { score += 2 }
+        if wordCount >= 1 && wordCount <= 5 { score += 2 }
         if hasVibeWords { score += 1 }
         if hasObjectWords { score += 2 }
         score = min(10, max(0, score))

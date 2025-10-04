@@ -42,7 +42,7 @@ struct AFMJudge {
         Based on the image analysis above, create a clever, evocative caption.
         
         **Rules:**
-        - Exactly 3-5 words
+        - Up to 5 words (1-5 words ideal)
         - Title Case (e.g., "Cozy Morning Vibes")
         - No emojis
         - Max 1 punctuation mark
@@ -105,11 +105,11 @@ struct AFMJudge {
     
     // MARK: - Validation Helpers
     
-    /// Validate caption format (3-5 words, basic cleanup)
+    /// Validate caption format (1-5 words, basic cleanup)
     static func validateCaption(_ caption: String) -> (isValid: Bool, cleaned: String) {
         let cleaned = caption.trimmingCharacters(in: .whitespacesAndNewlines)
         let wordCount = cleaned.split(separator: " ").count
-        let isValid = wordCount >= 3 && wordCount <= 5 && !cleaned.isEmpty
+        let isValid = wordCount >= 1 && wordCount <= 5 && !cleaned.isEmpty
         return (isValid, cleaned)
     }
     
