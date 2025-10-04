@@ -10,14 +10,16 @@ struct TrackView: View {
     var body: some View {
         ZStack {
             DesignSystem.Gradients.background.ignoresSafeArea()
-            ParticleBackground()
+            ParticleBackground().ignoresSafeArea()
             VStack(spacing: 16) {
                 header
                 ringControls
                 overlays
                 Spacer(minLength: 0)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 12)
+            .padding(.bottom, 32)
         }
     }
 
