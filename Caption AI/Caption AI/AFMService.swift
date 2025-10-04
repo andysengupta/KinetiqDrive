@@ -223,7 +223,10 @@ final class AFMService: ObservableObject {
             // Extract and parse caption from AI response
             let rawCaption = response.content
             let cleanedCaption = parseAICaption(rawCaption)
-            return AICaption(caption: cleanedCaption.isEmpty ? "Visual Moment" : cleanedCaption)
+            let finalCaption = cleanedCaption.isEmpty ? "Visual Moment" : cleanedCaption
+            
+            print("🎨 Final AI Caption: '\(finalCaption)'")
+            return AICaption(caption: finalCaption)
             
         } catch {
             print("AFM Caption Error: \(error)")

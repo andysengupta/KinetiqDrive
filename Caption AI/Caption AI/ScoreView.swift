@@ -23,14 +23,15 @@ struct ScoreView: View {
     private var cleanAICaption: String {
         let caption = aiCaption.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Check if caption is malformed (only punctuation, too short, etc)
+        // Check if caption is malformed (only punctuation, empty, or just brackets)
         if caption.isEmpty || 
-           caption.count < 3 || 
            !caption.contains(where: { $0.isLetter }) ||
            caption.allSatisfy({ "[]{}\"',:".contains($0) || $0.isWhitespace }) {
+            print("⚠️ ScoreView: Malformed AI caption '\(caption)', using fallback")
             return "Captured Moment"
         }
         
+        print("✅ ScoreView: Displaying AI caption '\(caption)'")
         return caption
     }
     
