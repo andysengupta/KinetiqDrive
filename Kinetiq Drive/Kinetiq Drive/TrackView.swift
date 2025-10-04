@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct TrackView: View {
     @EnvironmentObject private var sensing: MotionSensingManager

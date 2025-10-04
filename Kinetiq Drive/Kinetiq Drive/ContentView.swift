@@ -27,7 +27,7 @@ struct ContentView: View {
                                 case .liveMetrics:
                                     LiveMetricsView()
                                 case .dashboard:
-                                    DashboardView()
+                                    DashboardPlaceholderView()
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -131,7 +131,7 @@ private struct LiveMetricsView: View {
     }
 }
 
-private struct DashboardView: View {
+private struct DashboardPlaceholderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Dashboard")
