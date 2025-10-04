@@ -31,7 +31,7 @@ struct ContentView: View {
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .cardBackground()
+                            .glassCard()
                         }
                         .frame(height: proxy.size.height * 0.5)
                         .padding(.horizontal)
@@ -283,6 +283,6 @@ private struct ScoreBar: View {
                 .foregroundStyle(.primary)
         }
         .padding()
-        .cardBackground()
+        .glassCard()
     }
 }
